@@ -11,10 +11,10 @@ def loadMatrixFromFile(fileFullName):
     rows = int(info[0])
     columns = int(info[1])
     minIngredient = int(info[2])
-    maxIngredient = int(info[3])
+    maxCell = int(info[3])
 
     print 'minIngredient: ' + str(minIngredient)
-    print 'maxIngredient: ' + str(maxIngredient)
+    print 'maxCell: ' + str(maxCell)
 
     matrix = np.zeros((rows, columns))
 
@@ -26,7 +26,7 @@ def loadMatrixFromFile(fileFullName):
             if content[i][j] == 'M':
                 matrix[i][j] = 1
 
-    return (matrix, rows, columns, minIngredient, maxIngredient)
+    return (matrix, rows, columns, minIngredient, maxCell)
 
 # numberOfMushrooms = int(np.sum(np.sum(matrix)))
 # numberOfTomatoes = int(rows * columns - numberOfMushrooms)
@@ -40,6 +40,9 @@ def loadMatrixFromFile(fileFullName):
 # print 'maxNumberOfSlices: ' + str(maxNumberOfSlices)
 
 def isSliceOkay(matrix, startRow, endRow, startColumn, endColumn, minIngredient, maxCell):
+    (x, y) = matrix.shape
+    if endRow >= x or endColumn >= y:
+        return False
     subMatrix = matrix[startRow:endRow, startColumn:endColumn]
 
     if 2 in np.squeeze(subMatrix):
@@ -53,24 +56,35 @@ def updateSlice(matrix, startRow, endRow, startColumn, endColumn):
     matrix[startRow:endRow, startColumn:endColumn] = 2
     return matrix
 
-def solveForMatrix(matrix, rows, columns, minIngredient, maxIngredient, sizeX, sizeY):
-    i = 0
-    j = 0
-
-    print matrix
+def solveForMatrix(matrix, rows, columns, minIngredient, maxCell):
+    sizes = []
+    sizes.append((1, maxCell))
+    sizes.append((maxCell, 1))
+    sizes.append((int(math.sqrt(2 * minIngredient)), int(math.sqrt(2 * minIngredient))))
+    sizes.append((minIngredient, 2))
+    sizes.append((2, minIngredient))
 
     results = []
-    while i < rows and j < columns - sizeY + 1:
-        if isSliceOkay(matrix, i, i + sizeX, j, j + sizeY, minIngredient, maxIngredient):
-            updateSlice(matrix, i, i + sizeX, j, j + sizeY)
-            results.append([i, j, i + sizeX - 1, j + sizeY - 1])
-        i += 1
-        if i >= rows - sizeX + 1:
-            i = 0
-            j += 1
 
+    totalCellCovered = 0
+    for (sizeX, sizeY) in sizes:
+        print (sizeX, sizeY)
+        i = 0
+        j = 0
+        localCount = 0
+
+        while i < rows and j < columns:
+            if isSliceOkay(matrix, i, i + sizeX, j, j + sizeY, minIngredient, maxCell):
+                updateSlice(matrix, i, i + sizeX, j, j + sizeY)
+                results.append([i, j, i + sizeX - 1, j + sizeY - 1])
+                localCount += 1
+            i += 1
+            if i >= rows:
+                i = 0
+                j += 1
+        totalCellCovered += localCount * sizeX * sizeY
     print 'Done.'
-    print 'Cells covered: ' + str(len(results) * sizeX * sizeY)
+    print 'Cells covered: ' + str(totalCellCovered)
     print 'Total cells: ' + str(rows * columns)
     return results
 
@@ -85,14 +99,12 @@ def writeResults(results):
 
 
 if __name__ == "__main__":
-    names = {'small': (1, 5), 'medium': (1, 12), 'big' :(1, 14), 'example': (3, 2)}
+    names = ['small', 'medium', 'big', 'example']
     # names = {'small': (2, 2), 'medium': (3, 4), 'big' :(2, 7), 'example': (3, 2)}
-    for fileName, size in names.iteritems():
+    for fileName in names:
+        print
         print 'Starting on file ' + fileName
         fileFullName = dataDirectory + fileName + '.in'
-        (matrix, rows, columns, minIngredient, maxIngredient) = loadMatrixFromFile(fileFullName)
-        # size = int(math.sqrt(maxIngredient))
-        # print 'size: ' + str(size)
-        (sizeX, sizeY) = size
-        results = solveForMatrix(matrix, rows, columns, minIngredient, maxIngredient, sizeX, sizeY)
+        (matrix, rows, columns, minIngredient, maxCell) = loadMatrixFromFile(fileFullName)
+        results = solveForMatrix(matrix, rows, columns, minIngredient, maxCell)
         writeResults(results)
