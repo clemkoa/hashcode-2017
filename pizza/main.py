@@ -16,7 +16,7 @@ def loadMatrixFromFile(fileFullName):
     print 'minIngredient: ' + str(minIngredient)
     print 'maxCell: ' + str(maxCell)
 
-    matrix = np.zeros((rows, columns))
+    matrix = np.zeros((rows, columns), dtype = int)
 
     content.pop(0)
 
@@ -63,6 +63,8 @@ def solveForMatrix(matrix, rows, columns, minIngredient, maxCell):
     sizes.append((int(math.sqrt(2 * minIngredient)), int(math.sqrt(2 * minIngredient))))
     sizes.append((minIngredient, 2))
     sizes.append((2, minIngredient))
+    sizes.append((2 * minIngredient, 1))
+    sizes.append((1, 2 * minIngredient))
 
     results = []
 
@@ -83,6 +85,9 @@ def solveForMatrix(matrix, rows, columns, minIngredient, maxCell):
                 i = 0
                 j += 1
         totalCellCovered += localCount * sizeX * sizeY
+
+    # print matrix
+    # np.savetxt('test.csv', matrix[1:100, 1:100].astype(int), fmt='%i', delimiter=",")
     print 'Done.'
     print 'Cells covered: ' + str(totalCellCovered)
     print 'Total cells: ' + str(rows * columns)
