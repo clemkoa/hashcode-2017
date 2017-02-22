@@ -11,12 +11,10 @@
 using namespace localsolver;
 using namespace std;
 
-using Int = unsigned int;
-
 class Model {
 
   // Problem parameters
-  // Int n;
+  // int n;
 
   // Decision variables
   // vector<LSExpression> x; 
@@ -30,10 +28,10 @@ class Model {
   LocalSolver ls;
 
 public:
-  void readData(const string& fileName, Int nSlicesOverride);
+  void readData(const string& fileName);
 
   void defineModel();
-  void solve(Int timeLimit);
+  void solve(int timeLimit);
 
   void printSolution();
 

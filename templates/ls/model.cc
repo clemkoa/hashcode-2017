@@ -28,9 +28,9 @@ void Model::defineModel() {
 void Model::declareVariables(LSModel &model) {
   Timed timed("Declaring decision variables", Log::Level::DEBUG);
   
-  // x.resize(n)
+  // x.resize(n);
 
-  // for (Int i = 0 ; i < n ; i++)
+  // for (unsigned int i = 0 ; i < n ; i++)
   //   // Use boolVar, intVar or floatVar
   //   x[i] = model.intVar(0, K); // [min, max]  
 }
@@ -39,7 +39,7 @@ void Model::declareIntermediate(LSModel &model) {
   Timed timed("Declaring intermediate expressions", Log::Level::DEBUG);
 
   // LSExpression sum = model.sum();
-  // for (Int i = 0 ; i < n ; i++)
+  // for (unsigned int i = 0 ; i < n ; i++)
   //   sum += x[i];
 
   // LSExpression a = sum + static_cast<lsint>(5);
@@ -54,20 +54,20 @@ void Model::declareConstraints(LSModel &model) {
 
   // {
   //   Timed timed("First constraint", Log::Level::VERBOSE);
-  //   for (Int i = 0 ; i < n ; i++)
+  //   for (unsigned int i = 0 ; i < n ; i++)
   //     model.constraint((x[i] >= 5) || (x[i] == 0));
   // }
 }
 
 void Model::declareObjective(LSModel &model) {
   objective = model.sum();
-  for (Int i = 0 ; i < n ; i++)
+  for (unsigned int i = 0 ; i < n ; i++)
     objective += x[i];
 
   model.maximize(objective);
 }
 
-void Model::solve(Int timeLimit) {  
+void Model::solve(int timeLimit) {  
   // Parameterizes the solver
   LSPhase phase = ls.createPhase();
   phase.setTimeLimit(timeLimit);
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
     Log::Error("Syntax: ./model fileName timeLimit");
 
   const string fileName(argv[1]);
-  const Int timeLimit = stoi(argv[2]);
+  const int timeLimit = stoi(argv[2]);
 
   Model model;
 
