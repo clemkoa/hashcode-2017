@@ -13,6 +13,7 @@ void Model::defineModel() {
   Timed timed("Defining model");
 
   LSModel model = ls.getModel();
+  ls.addCallback(CT_TimeTicked, &cb);
 
   // Declare all LSExpressions
   declareVariables(model);
@@ -84,6 +85,19 @@ void Model::printSolution() {
   cout << endl;
 
   cout << "Objective: " << objective.getValue();
+}
+
+// ----------------------------- Callback Function -----------------------------
+
+void Callback::callback(LocalSolver& solver, LSCallbackType type) {
+  // int newObjective = ls.getModel().getObjective(0);
+  // if (newObjective > objective) {
+  //   objective = newObjective;
+
+  //   writeSolution();
+    
+  //   Log::Verbose("Wrote solution with objective = " + to_string(objective));
+  // }
 }
 
 // ------------------------------- Main Functions ------------------------------
