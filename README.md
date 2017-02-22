@@ -16,7 +16,7 @@ J'ai fait des fichiers templates pour deux approches
   - Commande pour compiler (remplace "model.cc" par nom du fichier source) :
   
   ```
-  g++ -std=c++11 model.cc -I/home/clement/code/libs/cpp-libs/include -I/opt/localsolver_6_5/include -llocalsolver -lpthread ~/code/libs/cpp-libs/libs.a -o model
+  g++ model.cc -ls -llocalsolver -lpthread -o model
   ```
 
 Pour les utiliser il faut SSH sur mon PC parce qu'ils ont besoin de licences
