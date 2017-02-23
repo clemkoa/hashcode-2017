@@ -40,9 +40,22 @@ class DataVideos():
             a,b,k = [int(a) for a in content[k].split()]
             self.requests[a][b] = k
         print 'Done initialising file ' + str(fileName)
+        self.writeResults()
+
+    def writeResults(self):
+        outputFile = 'output/' + self.fileName + '.txt'
+        f = open(outputFile, 'w')
+        f.write(str(self.C) + '\n')
+        for r in range(self.C):
+            f.write(str(r) + ' 1 ' + '\n')
+
+        f.close()
+
+
+
 
 if __name__ == "__main__":
-    names = ['me_at_the_zoo.in']#, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     for fileName in names:
         data = DataVideos(fileName)
         print(data.pings)
