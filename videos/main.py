@@ -40,8 +40,8 @@ class DataVideos():
             a,b,k = [int(a) for a in content[k].split()]
             self.requests[b][a] = k
         print 'Done initialising file ' + str(fileName)
-        result = self.findBaseline()
-        self.writeResults(result)
+        result = self.findBaselineBetter()
+        # self.writeResults(result)
 
     def findBaseline(self):
         result = {}
@@ -54,6 +54,42 @@ class DataVideos():
                 videoId += 1
                 if memoryUsed < self.X:
                     result[i].append(videoId)
+        return result
+
+    def findBaselineBetter(self):
+        result = {}
+        for i in range(self.C):
+            result[i] = []
+            memoryUsed = 0
+            videoId = 0
+            endpoints = self.reversePings[i]
+            print 'endpoints'
+            print endpoints
+            # for endpoint associe serveur:
+            #     trouver les videos
+            #     calculer le poids des videos
+            #     prendre les meilleures videos
+            videos = {}
+
+            for endpoint in endpoints:
+                for videoId in self.requests[endpoint]:
+                    print videoId, self.requests[endpoint][videoId]
+                    if videoId not in videos:
+                        videos[videoId] = 0
+                    videos[videoId] += self.requests[endpoint][videoId]
+
+            sortedKeys = sorted(videos.keys())
+            print videos
+            print sortedKeys
+            for key in sortedKeys:
+                print videos[key]
+            # print 'sorted_x'
+            # print newVideos
+            # while memoryUsed < self.X:
+            #     memoryUsed += self.sizes[videoId]
+            #     videoId += 1
+            #     if memoryUsed < self.X:
+            #         result[i].append(videoId)
         return result
 
     def writeResults(self, results):
@@ -89,8 +125,8 @@ def UgoOptim(data):
     print(cacheSolution)
 
 if __name__ == "__main__":
-    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    names = ['me_at_the_zoo.in']#, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     for fileName in names:
         data = DataVideos(fileName)
 
-        UgoOptim(data)
+        # UgoOptim(data)
