@@ -78,8 +78,15 @@ def UgoOptim(data):
         print('Dividing costs')
 
     removeVideos = True
+    semiRemoved = False
     if removeVideos:
-        print('Removing videos')
+        if semiRemoved:
+            print('Semi-removing videos')
+        else:
+            print('Removing videos')
+    elif semiRemoved:
+        print('Can\'t semi removed if not removed')
+        exit(1)
 
     smartOrder = True
     divideCostInOrder = False
@@ -95,6 +102,13 @@ def UgoOptim(data):
     # Make a copy of requests
     requests = copy.deepcopy(data.requests)
 
+    # Compute average pings from endpoints to caches
+    endpointMinPings = [0 for e in range(data.E)] # If endpoint is connected to nothing, doesn't matter so 0
+    for endpoint in range(data.E):
+        if len(data.pings[endpoint].values()) != 0:
+            endpointMinPings[endpoint] = sum(data.pings[e].values()) / float(len(data.pings[e].values()))
+
+    # Compute order of caches
     cacheSolution = {}
     if smartOrder:
         usefullnesses = [0 for a in range(data.C)] # Compute usefullnesses of each cache
@@ -148,9 +162,10 @@ def UgoOptim(data):
         # If they are, we miss out on potentially closer caches
 
         if removeVideos:
-            for endpoint in data.reversePings[cache].keys():
-                for video in cacheSolution[cache]:
-                    requests[endpoint].pop(video, None) # Remove video, even if it's not there
+            for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
+                if (not semiRemoved) or (cacheEndpointPing <= endpointMinPings[endpoint]): # Semi removed ?
+                    for video in cacheSolution[cache]:
+                        requests[endpoint].pop(video, None) # Remove video, even if it's not there
 
         print('')
 
