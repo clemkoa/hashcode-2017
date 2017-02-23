@@ -40,7 +40,21 @@ class DataVideos():
             a,b,k = [int(a) for a in content[k].split()]
             self.requests[b][a] = k
         print 'Done initialising file ' + str(fileName)
-        self.writeResults({1: [1, 2]})
+        result = self.findBaseline()
+        self.writeResults(result)
+
+    def findBaseline(self):
+        result = {}
+        for i in range(self.C):
+            result[i] = []
+            memoryUsed = 0
+            videoId = 0
+            while memoryUsed < self.X:
+                memoryUsed += self.sizes[videoId]
+                videoId += 1
+                if memoryUsed < self.X:
+                    result[i].append(videoId)
+        return result
 
     def writeResults(self, results):
         ###############       FORMAT        ################
@@ -75,7 +89,7 @@ def UgoOptim(data):
     print(cacheSolution)
 
 if __name__ == "__main__":
-    names = ['me_at_the_zoo.in']#, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     for fileName in names:
         data = DataVideos(fileName)
 
