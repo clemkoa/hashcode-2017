@@ -25,7 +25,7 @@ if __name__ == "__main__":
     productTypes = int(content[1])
     productTypeWeights = [int(a) for a in content[2].split()]
     wharehousesNumber = int(content[3])
-    print wharehousesNumber
+    print(wharehousesNumber)
 
     wharehousesPositions = []
     wharehousesProducts = []
