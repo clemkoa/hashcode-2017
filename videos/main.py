@@ -102,6 +102,7 @@ class DataVideos():
                 if v[j][0] not in forbidden[i]:
                     memoryUsed += self.sizes[v[j][0]]
                     if memoryUsed < self.X:
+                        print 'appending some stuff'
                         result[i].append(v[j][0])
                     j += 1
         return result
@@ -164,9 +165,13 @@ class DataVideos():
         for i in range(self.C):
             for j in range(self.C):
                 for v in range(self.V):
-                    if score[i][j][v] > 0.9:
+                    if score[i][j][v] > 0.01:
+                        print 'removing ' + str(v)
+                        print results[j]
                         results[j] = [x for x in results[j] if x != v]
+                        print results[j]
                         forbidden[j].append(v)
+                        # return []
 
         print('forbidden')
         # GET THE OTHERS
