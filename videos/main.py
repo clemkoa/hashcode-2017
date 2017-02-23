@@ -2,7 +2,7 @@
 import numpy as np
 import math, copy
 dataDirectory = 'data/'
-
+import operator
 class DataVideos():
     def __init__(self, fileName):
         self.fileName = fileName
@@ -41,7 +41,7 @@ class DataVideos():
             self.requests[b][a] = k
         print 'Done initialising file ' + str(fileName)
         result = self.findBaselineBetter()
-        # self.writeResults(result)
+        self.writeResults(result)
 
     def findBaseline(self):
         result = {}
@@ -61,35 +61,21 @@ class DataVideos():
         for i in range(self.C):
             result[i] = []
             memoryUsed = 0
-            videoId = 0
+            j = 0
             endpoints = self.reversePings[i]
-            print 'endpoints'
-            print endpoints
-            # for endpoint associe serveur:
-            #     trouver les videos
-            #     calculer le poids des videos
-            #     prendre les meilleures videos
             videos = {}
 
             for endpoint in endpoints:
                 for videoId in self.requests[endpoint]:
-                    print videoId, self.requests[endpoint][videoId]
                     if videoId not in videos:
                         videos[videoId] = 0
                     videos[videoId] += self.requests[endpoint][videoId]
-
-            sortedKeys = sorted(videos.keys())
-            print videos
-            print sortedKeys
-            for key in sortedKeys:
-                print videos[key]
-            # print 'sorted_x'
-            # print newVideos
-            # while memoryUsed < self.X:
-            #     memoryUsed += self.sizes[videoId]
-            #     videoId += 1
-            #     if memoryUsed < self.X:
-            #         result[i].append(videoId)
+            v = sorted(videos.items(), key=operator.itemgetter(1))[::-1]
+            while memoryUsed < self.X:
+                memoryUsed += self.sizes[v[j][0]]
+                if memoryUsed < self.X:
+                    result[i].append(v[j][0])
+                j += 1
         return result
 
     def writeResults(self, results):
@@ -125,7 +111,7 @@ def UgoOptim(data):
     print(cacheSolution)
 
 if __name__ == "__main__":
-    names = ['me_at_the_zoo.in']#, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     for fileName in names:
         data = DataVideos(fileName)
 
