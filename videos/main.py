@@ -116,11 +116,11 @@ def UgoOptim(data):
             for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
                 for video, Rn in requests[endpoint].iteritems():
                     if divideCostInOrder:
-                        usefullnesses[cache] += Rn * (data.latencies[endpoint] - cacheEndpointPing) / data.sizes[video] # Rn * (Ld - L) / T
+                        usefullnesses[cache] += float(Rn) / float(data.sizes[video])# * (data.latencies[endpoint] - cacheEndpointPing) / data.sizes[video] # Rn * (Ld - L) / T
                     else:
-                        usefullnesses[cache] += Rn * (data.latencies[endpoint] - cacheEndpointPing) # Rn * (Ld - L)
+                        usefullnesses[cache] += Rn# * (data.latencies[endpoint] - cacheEndpointPing) # Rn * (Ld - L)
 
-        order = sorted(range(data.C), key=lambda c: usefullnesses[c])
+        order = sorted(range(data.C), reverse = True, key=lambda c: usefullnesses[c])
     else:
         order = range(data.C) # Better order than from 0 to C-1 ?
     for cache in order:
@@ -131,7 +131,7 @@ def UgoOptim(data):
         for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
             for video, Rn in requests[endpoint].iteritems():
                 if divideCost:
-                    cost = Rn * (data.latencies[endpoint] - cacheEndpointPing) / data.sizes[video] # Rn * (Ld - L) / T
+                    cost = float(Rn * (data.latencies[endpoint] - cacheEndpointPing)) / float(data.sizes[video]) # Rn * (Ld - L) / T
                 else:
                     cost = Rn * (data.latencies[endpoint] - cacheEndpointPing) # Rn * (Ld - L)
                 if video not in wantedVideos:
