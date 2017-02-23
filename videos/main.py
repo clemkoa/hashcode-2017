@@ -132,8 +132,13 @@ class DataVideos():
                 self.ping[self.E - n][a] = b
             i += k +1
             n -= 1
-        print len(self.ping)
-        print len(self.ping[9])
+
+        offset = i
+        self.requests = np.zeros((self.V, self.E), dtype = int)
+        for k in range(offset, offset + self.R):
+            a,b,k = [int(a) for a in content[k].split()]
+            self.requests[a][b] = k
+        print self.requests
 if __name__ == "__main__":
     names = ['me_at_the_zoo.in'] #, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     # names = {'small': (2, 2), 'medium': (3, 4), 'big' :(2, 7), 'example': (3, 2)}
