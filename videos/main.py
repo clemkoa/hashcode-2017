@@ -41,6 +41,7 @@ class DataVideos():
             self.requests[b][a] = k
         print 'Done initialising file ' + str(fileName)
         result = self.findBaselineBetter()
+        result = self.improveResults(result)
         self.writeResults(result)
 
     def findBaseline(self):
@@ -69,7 +70,7 @@ class DataVideos():
                 for videoId in self.requests[endpoint]:
                     if videoId not in videos:
                         videos[videoId] = 0
-                    videos[videoId] += self.requests[endpoint][videoId]
+                    videos[videoId] += self.requests[endpoint][videoId] / self.sizes[videoId]
             v = sorted(videos.items(), key=operator.itemgetter(1))[::-1]
             while memoryUsed < self.X:
                 memoryUsed += self.sizes[v[j][0]]
@@ -77,6 +78,101 @@ class DataVideos():
                     result[i].append(v[j][0])
                 j += 1
         return result
+
+    def improveResultsWithForbidden(self, result, forbidden):
+        for i in range(self.C):
+            result[i] = []
+            memoryUsed = sum([self.sizes[j] for j in result[i]])
+            j = len(result[i])
+            endpoints = self.reversePings[i]
+            videos = {}
+
+            for endpoint in endpoints:
+                for videoId in self.requests[endpoint]:
+                    if videoId not in videos:
+                        videos[videoId] = 0
+                    videos[videoId] += self.requests[endpoint][videoId] / self.sizes[videoId]
+            v = sorted(videos.items(), key=operator.itemgetter(1))[::-1]
+
+            m = 0
+            while memoryUsed < self.X:
+                if m > self.V:
+                    break
+                m += 1
+                if v[j][0] not in forbidden[i]:
+                    memoryUsed += self.sizes[v[j][0]]
+                    if memoryUsed < self.X:
+                        result[i].append(v[j][0])
+                    j += 1
+        return result
+
+    def improveResults(self, results):
+        score = np.zeros((self.C, self.C, self.V))
+        videos = [[[] for i in range(self.C)] for j in range(self.C)]
+
+        for i in range(self.C):
+            print i
+            iEndpoints = self.reversePings[i]
+            videos1 = []
+            for endpoint in iEndpoints:
+                videosFromEndpoints = self.requests[endpoint]
+                for video in videosFromEndpoints:
+                    if video not in videos1:
+                        videos1.append(video)
+            for j in range(self.C):
+                if i < j:
+                    jEndpoints = self.reversePings[j]
+                    videos2 = []
+                    for endpoint in jEndpoints:
+                        videosFromEndpoints = self.requests[endpoint]
+                        for video in videosFromEndpoints:
+                            if video not in videos2:
+                                videos2.append(video)
+                    v =  set(videos1).intersection(videos2)
+                    videos[i][j] = list(v)
+                    # FOR EACH VIDEO GET SCORE
+
+        for i in range(self.C):
+            iEndpoints = self.reversePings[i]
+            for j in range(self.C):
+                jEndpoints = self.reversePings[j]
+                for video in videos[i][j]:
+                    d1 = 0
+                    total1 = 0
+                    n1 = 0
+
+                    d2 = 0
+                    total2 = 0
+                    n2 = 0
+                    for endpoint in iEndpoints:
+                        total1 += 1
+                        if video in self.requests[endpoint]:
+                            d1 += 1
+                            if endpoint in jEndpoints:
+                                n1 +=1
+                    for endpoint in jEndpoints:
+                        total2 += 1
+                        if video in self.requests[endpoint]:
+                            d2 += 1
+                            if endpoint in iEndpoints:
+                                n2 +=1
+
+                    score[i][j][video] = 1.0 * n1 / d1
+                    score[j][i][video] = 1.0 * n2 / d2
+
+        forbidden = [[] for i in range(self.C)]
+        for i in range(self.C):
+            for j in range(self.C):
+                for v in range(self.V):
+                    if score[i][j][v] > 0.9:
+                        results[j] = [x for x in results[j] if x != v]
+                        forbidden[j].append(v)
+
+        print('forbidden')
+        # GET THE OTHERS
+        result = self.improveResultsWithForbidden(results, forbidden)
+        return result
+
 
     def writeResults(self, results):
         ###############       FORMAT        ################
@@ -111,7 +207,7 @@ def UgoOptim(data):
     print(cacheSolution)
 
 if __name__ == "__main__":
-    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    names = ['me_at_the_zoo.in']#, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     for fileName in names:
         data = DataVideos(fileName)
 
