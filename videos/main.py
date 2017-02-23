@@ -20,7 +20,7 @@ class DataVideos():
 
         self.latencies = []
         self.pings = [{} for a in range(self.E)] # Latencies from endpoints to caches
-        self.reversePings = [{} for a in range(self.C)] # Latencies from endpoints to caches
+        self.reversePings = [{} for a in range(self.C)] # Latencies from caches to endpoints
 
         n = self.E
         i = 2
@@ -40,8 +40,6 @@ class DataVideos():
             a,b,k = [int(a) for a in content[k].split()]
             self.requests[b][a] = k
         print 'Done initialising file ' + str(fileName)
-        result = self.findBaseline()
-        self.writeResults(result)
 
     def findBaseline(self):
         result = {}
@@ -76,17 +74,55 @@ class DataVideos():
 def UgoOptim(data):
     # Make a copy of requests
     requests = copy.deepcopy(data.requests)
-    print(requests)
 
     cacheSolution = {}
     for cache in range(data.C): # Better order than from 0 to C-1
-        availableSize = data.sizes[cache]
+        print('Cache: {}'.format(cache))
 
         # Aggregate wanted videos for this cache
+        wantedVideos = {}
+        for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
+            for video, Rn in requests[endpoint].iteritems():
+                cost = Rn * (data.latencies[endpoint] - cacheEndpointPing) # Rn * (Ld - L)
+                if video not in wantedVideos:
+                    wantedVideos[video] = cost
+                else:
+                    wantedVideos[video] += cost
+        videos = wantedVideos.keys()
+        costs = wantedVideos.values()
 
+        # Sort videos by cost function
+        sortedCosts, sortedVideos = zip(*sorted(zip(costs, videos), reverse = True))
+        sortedCosts = list(sortedCosts)
+        sortedVideos = list(sortedVideos)
+        sortedSizes = np.array(data.sizes)[sortedVideos]
+
+        # Find all videos that can fit inside the cache, with that order
+        availableSize = data.X
+        lastVideo = -1
+        while availableSize > 0:
+            lastVideo += 1
+            availableSize -= sortedSizes[lastVideo]
+        # lastVideo is EXCLUSIVE, i.e. made for use with numpy [:lastVideo]
+        cacheSolution[cache] = sortedVideos[:lastVideo]
+        print(cacheSolution[cache])
+
+        # Remove cached videos from endpoints?
+        removeVideos = True
+        # If not removed, could lead to the same videos being stored everywhere
+        # If they are, we miss out on potentially closer caches
+
+        if removeVideos:
+            print('Removing videos')
+            for endpoint in data.reversePings[cache].keys():
+                for video in cacheSolution[cache]:
+                    requests[endpoint].pop(video, None) # Remove video, even if it's not there
+
+        print('')
 
     print('Solution:')
     print(cacheSolution)
+    data.writeResults(cacheSolution)
 
 if __name__ == "__main__":
     names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
