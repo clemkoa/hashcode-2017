@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-import math
+import math, copy
 dataDirectory = 'data/'
 
 class DataVideos():
@@ -35,10 +35,10 @@ class DataVideos():
             n -= 1
 
         offset = i
-        self.requests = np.zeros((self.V, self.E), dtype = int)
+        self.requests = [{} for a in range(self.E)] # For each endpoint, a dictionary of videos and associated number of requests
         for k in range(offset, offset + self.R):
             a,b,k = [int(a) for a in content[k].split()]
-            self.requests[a][b] = k
+            self.requests[b][a] = k
         print 'Done initialising file ' + str(fileName)
         self.writeResults({1: [1, 2]})
 
@@ -59,12 +59,24 @@ class DataVideos():
 
         f.close()
 
+def UgoOptim(data):
+    # Make a copy of requests
+    requests = copy.deepcopy(data.requests)
+    print(requests)
+
+    cacheSolution = {}
+    for cache in range(data.C): # Better order than from 0 to C-1
+        availableSize = data.sizes[cache]
+
+        # Aggregate wanted videos for this cache
 
 
+    print('Solution:')
+    print(cacheSolution)
 
 if __name__ == "__main__":
     names = ['me_at_the_zoo.in']#, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     for fileName in names:
         data = DataVideos(fileName)
-        print(data.pings)
-        print(data.reversePings)
+
+        UgoOptim(data)
