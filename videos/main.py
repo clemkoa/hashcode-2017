@@ -72,18 +72,54 @@ class DataVideos():
         f.close()
 
 def UgoOptim(data):
+    # Parameters
+    divideCost = True
+    if divideCost:
+        print('Dividing costs')
+
+    removeVideos = True
+    if removeVideos:
+        print('Removing videos')
+
+    smartOrder = True
+    divideCostInOrder = False
+    if smartOrder:
+        if not removeVideos:
+            print('Useless : order doesn\'t impact if not removing')
+            exit(1)
+
+        print('Using smart order')
+        if divideCostInOrder:
+            print('Dividing costs in order')
+
     # Make a copy of requests
     requests = copy.deepcopy(data.requests)
 
     cacheSolution = {}
-    for cache in range(data.C): # Better order than from 0 to C-1
+    if smartOrder:
+        usefullnesses = [0 for a in range(data.C)] # Compute usefullnesses of each cache
+        for cache in range(data.C):
+            for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
+                for video, Rn in requests[endpoint].iteritems():
+                    if divideCostInOrder:
+                        usefullnesses[cache] += Rn * (data.latencies[endpoint] - cacheEndpointPing) / data.sizes[video] # Rn * (Ld - L) / T
+                    else:
+                        usefullnesses[cache] += Rn * (data.latencies[endpoint] - cacheEndpointPing) # Rn * (Ld - L)
+
+        order = sorted(range(data.C), key=lambda c: usefullnesses[c])
+    else:
+        order = range(data.C) # Better order than from 0 to C-1 ?
+    for cache in order:
         print('Cache: {}'.format(cache))
 
         # Aggregate wanted videos for this cache
         wantedVideos = {}
         for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
             for video, Rn in requests[endpoint].iteritems():
-                cost = Rn * (data.latencies[endpoint] - cacheEndpointPing) # Rn * (Ld - L)
+                if divideCost:
+                    cost = Rn * (data.latencies[endpoint] - cacheEndpointPing) / data.sizes[video] # Rn * (Ld - L) / T
+                else:
+                    cost = Rn * (data.latencies[endpoint] - cacheEndpointPing) # Rn * (Ld - L)
                 if video not in wantedVideos:
                     wantedVideos[video] = cost
                 else:
@@ -108,12 +144,10 @@ def UgoOptim(data):
         print(cacheSolution[cache])
 
         # Remove cached videos from endpoints?
-        removeVideos = True
         # If not removed, could lead to the same videos being stored everywhere
         # If they are, we miss out on potentially closer caches
 
         if removeVideos:
-            print('Removing videos')
             for endpoint in data.reversePings[cache].keys():
                 for video in cacheSolution[cache]:
                     requests[endpoint].pop(video, None) # Remove video, even if it's not there
