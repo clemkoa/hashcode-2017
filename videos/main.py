@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import numpy as np
 import math
 dataDirectory = 'data/'
@@ -18,17 +19,18 @@ class DataVideos():
         self.sizes = [int(a) for a in content[1].split()]
 
         self.latencies = []
-        self.ping = []
+        self.pings = [{} for a in range(self.E)] # Latencies from endpoints to caches
+        self.reversePings = [{} for a in range(self.C)] # Latencies from endpoints to caches
 
         n = self.E
         i = 2
         while n != 0:
             self.latencies.append(int(content[i].split()[0]))
             k = int(content[i].split()[1])
-            self.ping.append({})
             for j in range(k):
-                a,b = content[i + 1 + j].split()
-                self.ping[self.E - n][a] = b
+                a, b = content[i + 1 + j].split()
+                self.pings[self.E - n][int(a)] = int(b)
+                self.reversePings[int(a)][self.E - n] = int(b)
             i += k +1
             n -= 1
 
@@ -40,6 +42,8 @@ class DataVideos():
         print 'Done initialising file ' + str(fileName)
 
 if __name__ == "__main__":
-    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    names = ['me_at_the_zoo.in']#, 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
     for fileName in names:
         data = DataVideos(fileName)
+        print(data.pings)
+        print(data.reversePings)
