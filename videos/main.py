@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-import math, copy
+import math, copy, time, bisect
 dataDirectory = 'data/'
 
 class DataVideos():
@@ -173,9 +173,107 @@ def UgoOptim(data):
     print(cacheSolution)
     data.writeResults(cacheSolution)
 
+def ObjectiveCost(Rn, latency, ping, size):
+    return Rn * (latency - ping) / size
+
+def PaulOptim(data):
+    # Make a copy of requests
+    requests = copy.deepcopy(data.requests)
+
+    # Compute all possible options
+    wantedVideos = {}
+    for cache in range(data.C):
+        # Aggregate wanted videos for this cache
+        for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
+            for video, Rn in requests[endpoint].iteritems():
+                cost = ObjectiveCost(Rn, data.latencies[endpoint], cacheEndpointPing, data.sizes[video])
+
+                if video not in wantedVideos:
+                    wantedVideos[(cache, video)] = cost
+                else:
+                    wantedVideos[(cache, video)] += cost
+
+    cacheVideoTuples = wantedVideos.keys()
+    costs = wantedVideos.values()
+    sortedCosts, sortedCacheVideoTuples = zip(*sorted(zip(costs, cacheVideoTuples), reverse = False)) # Because we use pop
+    sortedCosts = list(sortedCosts)
+    sortedCacheVideoTuples = list(sortedCacheVideoTuples)
+
+    availableSizes = [data.X for c in range(data.C)]
+    cacheSolution = {}
+    while len(sortedCacheVideoTuples) != 0 and sum(availableSizes) != 0:
+        # Find first video that can be added
+        ok = False
+        while (not ok) and len(sortedCosts) != 0:
+            cache, video = sortedCacheVideoTuples.pop()
+            cost = sortedCosts.pop()
+            wantedVideos.pop((cache, video))
+
+            ok = (data.sizes[video] <= availableSizes[cache])
+
+        if not ok:
+            print('Can\'t add anything more')
+            break
+
+        # Add video to cache and update remaining size
+        print('Adding video {} to cache {}, {} remaining possibilities'.format(video, cache, len(sortedCosts)))
+        if not cache in cacheSolution:
+            cacheSolution[cache] = []
+        cacheSolution[cache].append(video)
+        availableSizes[cache] -= data.sizes[video]
+
+        # Update costs of that video on other caches, linked by a common endpoint
+        for endpoint, cacheEndpointPing in data.reversePings[cache].iteritems():
+            if video in requests[endpoint]:
+                Rn = requests[endpoint][video]
+
+                for c, otherCacheEndpointPing in data.pings[endpoint].iteritems():
+                    if c != cache and (c, video) in wantedVideos:
+                        oldCost = wantedVideos[(c, video)]
+                        wantedVideos[(c, video)] += ObjectiveCost(Rn, cacheEndpointPing, otherCacheEndpointPing, data.sizes[video]) - ObjectiveCost(Rn, data.latencies[endpoint], otherCacheEndpointPing, data.sizes[video])
+                        newCost = wantedVideos[(c, video)]
+
+                        # Update order: find current position, remove it (fast)
+                        index = bisect.bisect_left(sortedCosts, oldCost)
+                        sortedCacheVideoTuples[index]
+                        while sortedCacheVideoTuples[index] != (c, video):
+                            index += 1
+
+                        del sortedCosts[index]
+                        del sortedCacheVideoTuples[index]
+
+                        if wantedVideos[(c, video)] <= 0:
+                            wantedVideos.pop((c, video))
+                        else:
+                            # Add it again at the right spot
+                            if newCost > oldCost:
+                                index = bisect.bisect(sortedCosts, newCost, lo = index)
+                            else:
+                                index = bisect.bisect(sortedCosts, newCost, hi = index)
+
+                            sortedCosts.insert(index, newCost)
+                            sortedCacheVideoTuples.insert(index, (c, video))
+
+        # start = time.time()
+        # # Remove videos that can no longer fit in caches (very slow sometimes)
+        # for endpoint in data.reversePings[cache]:
+        #     for video in requests[endpoint]:
+        #         if availableSizes[cache] < data.sizes[video] and (cache, video) in wantedVideos:
+        #             wantedVideos.pop((cache, video))
+        #             index = sortedCacheVideoTuples.index((cache, video))
+        #             del sortedCacheVideoTuples[index]
+        #             del sortedCosts[index]
+        # print('Removing videos in {}ms'.format(1000.0 * (time.time() - start)))
+
+    print('Solution:')
+    print(cacheSolution)
+    data.writeResults(cacheSolution)
+
 if __name__ == "__main__":
-    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    # names = ['me_at_the_zoo.in', 'videos_worth_spreading.in', 'trending_today.in', 'kittens.in']
+    names = ['me_at_the_zoo.in', 'videos_worth_spreading.in']
     for fileName in names:
         data = DataVideos(fileName)
 
-        UgoOptim(data)
+        # UgoOptim(data)
+        PaulOptim(data)
